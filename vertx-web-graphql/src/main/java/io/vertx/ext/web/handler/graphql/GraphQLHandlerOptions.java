@@ -37,8 +37,11 @@ public class GraphQLHandlerOptions {
    */
   public static final boolean DEFAULT_REQUEST_MULTIPART_ENABLED = false;
 
+  public static final boolean DEFAULT_WORKER = false;
+
   private boolean requestBatchingEnabled = DEFAULT_REQUEST_BATCHING_ENABLED;
   private boolean requestMultipartEnabled = DEFAULT_REQUEST_MULTIPART_ENABLED;
+  private boolean worker = DEFAULT_WORKER;
 
   /**
    * Default constructor.
@@ -54,6 +57,7 @@ public class GraphQLHandlerOptions {
   public GraphQLHandlerOptions(GraphQLHandlerOptions other) {
     requestBatchingEnabled = other.requestBatchingEnabled;
     requestMultipartEnabled = other.requestMultipartEnabled;
+    worker = other.worker;
   }
 
   /**
@@ -110,6 +114,15 @@ public class GraphQLHandlerOptions {
    */
   public GraphQLHandlerOptions setRequestMultipartEnabled(boolean requestMultipartEnabled) {
     this.requestMultipartEnabled = requestMultipartEnabled;
+    return this;
+  }
+
+  public boolean isWorker() {
+    return worker;
+  }
+
+  public GraphQLHandlerOptions setWorker(boolean worker) {
+    this.worker = worker;
     return this;
   }
 }

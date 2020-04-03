@@ -17,11 +17,9 @@
 package io.vertx.ext.web.handler.graphql.impl;
 
 import graphql.ExecutionInput;
+import graphql.ExecutionResult;
 import graphql.GraphQL;
-import io.vertx.core.AsyncResult;
-import io.vertx.core.CompositeFuture;
-import io.vertx.core.Future;
-import io.vertx.core.MultiMap;
+import io.vertx.core.*;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.http.HttpHeaders;
 import io.vertx.core.http.HttpMethod;
@@ -36,6 +34,7 @@ import io.vertx.ext.web.handler.graphql.GraphQLHandlerOptions;
 import org.dataloader.DataLoaderRegistry;
 
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 import java.util.regex.Pattern;
 import java.util.stream.StreamSupport;
@@ -355,8 +354,18 @@ public class GraphQLHandlerImpl implements GraphQLHandler {
       builder.locale(locale);
     }
 
-    return Future.fromCompletionStage(graphQL.executeAsync(builder.build()), rc.vertx().getOrCreateContext())
-      .map(executionResult -> new JsonObject(executionResult.toSpecification()));
+    Context context = rc.vertx().getOrCreateContext();
+    Future<ExecutionResult> future;
+    if (options.isWorker()) {
+      future = rc.vertx().<CompletableFuture<ExecutionResult>>executeBlocking(promise -> {
+        CompletableFuture<ExecutionResult> cf = graphQL.executeAsync(builder.build());
+        promise.complete(cf);
+      }, false).flatMap(cf -> Future.fromCompletionStage(cf, context));
+    } else {
+      future = Future.fromCompletionStage(graphQL.executeAsync(builder.build()), context);
+    }
+
+    return future.map(executionResult -> new JsonObject(executionResult.toSpecification()));
   }
 
   private String getContentType(RoutingContext rc) {
